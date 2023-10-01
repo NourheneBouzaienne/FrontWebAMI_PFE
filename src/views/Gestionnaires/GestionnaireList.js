@@ -19,7 +19,8 @@ import {
     Button,
     Select,
     MenuItem,
-    Fab
+    Fab,
+    ButtonGroup
 } from "@mui/material";
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import InfoIcon from '@mui/icons-material/Info';
@@ -31,27 +32,31 @@ import HighlightOffOutlinedIcon from '@mui/icons-material/HighlightOffOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import axios from "axios";
 import { DailyActivities } from "../dashboards/dashboard1-components";
-import ClientDetails from "./clientDetails";
-import UpdateClient from './updateClient'
-import AddClient from "./addClient";
+import AddGestionnaire from "./AddGestionnaire";
+import UpdateGestionnaire from "./UpdateGestionnaire";
 
 
-function clientList() {
-    const [clients, setClients] = useState([]);
+
+function GestionnaireList() {
+    const [gestionnaires, setGestionnaires] = useState([]);
+    const [roles, setRoles] = useState([]);
+
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedState, setSelectedState] = useState("");
-    const [selectedClientId, setSelectedClientId] = useState("");
-    const [selectedClient, setSelectedClient] = useState(null);
+    const [selectedGestionnaireId, setSelectedGestionnaireId] = useState("");
+    const [selectedGestionnaire, setSelectedGestionnaire] = useState(null);
     const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
     const [showUpdateForm, setShowUpdateForm] = useState(false);
     const [showAddClient, setShowAddClient] = useState(false);
+    const [selectedGestionnaireForRole, setSelectedGestionnaireForRole] = useState(null);
+    const [openRoleDialog, setOpenRoleDialog] = useState(false);
 
 
     const [page, setPage] = useState(1);
     const itemsPerPage = 5; // Number of items to display per page
 
     useEffect(() => {
-        fetchClients();
+        fetchGestionnaires();
     }, [page]);
 
     const handlePreviousPage = () => {
@@ -70,8 +75,20 @@ function clientList() {
     const handleCloseDetailsDialog = () => {
         setOpenDetailsDialog(false);
     };
-    const handleOpenUpdateForm = (clientId) => {
-        setSelectedClientId(clientId);
+
+    const handleOpenRoleDialog = (gestionnaire) => {
+        setSelectedGestionnaireForRole(gestionnaire);
+        setOpenRoleDialog(true);
+    };
+
+    const handleOpenUpdateForm = (gestionnaireId) => {
+        setSelectedGestionnaireId(gestionnaireId);
+        const selectedGestionnaire = gestionnaires.find((gestionnaire) => gestionnaire.id === gestionnaireId);
+
+        // Check if selectedGestionnaire.roles is an array with at least one role, and take the first role
+        const selectedRole = selectedGestionnaire.roles && selectedGestionnaire.roles.length > 0 ? selectedGestionnaire.roles[0] : null;
+
+        setSelectedGestionnaire({ ...selectedGestionnaire, roles: selectedRole });
         setShowUpdateForm(true);
     };
 
@@ -90,21 +107,21 @@ function clientList() {
         // Replace "formData" with the actual data from the form
         // Don't forget to set setShowUpdateForm(false) to close the form after submission
     };
-    const handleDeleteClient = async (clientId) => {
+    const handleDeleteGestionnaire = async (gestionnaireId) => {
 
         try {
             // Make an API call to delete the client
-            await axios.delete(`http://localhost:8060/api/Gestionnaire/deleteClient/${clientId}`, {
+            await axios.delete(`http://localhost:8060/api/Admin/deleteGestionnaire/${gestionnaireId}`, {
                 headers: {
                     Authorization: token,
                 },
             });
 
-            console.log(`Client with ID ${clientId} deleted successfully.`);
+            console.log(`gestionnaireI with ID ${gestionnaireId} deleted successfully.`);
             // Call the function to refresh the client list after successful deletion
-            refreshClientList();
+            refreshGestionnairesList();
         } catch (error) {
-            console.error(`Error deleting client with ID ${clientId}:`, error);
+            console.error(`Error deleting gestionnaire with ID ${gestionnaireId}:`, error);
         }
     };
 
@@ -136,33 +153,16 @@ function clientList() {
         return null;
     }
 
-    const refreshClientList = async () => {
+    const refreshGestionnairesList = async () => {
         try {
             const response = await axios.get(
-                "http://localhost:8060/api/Gestionnaire/clients",
-                {
-                    headers: {
-                        Authorization: token,
-                    },
-                }
-            );
-            const startIndex = (page - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const slicedClients = response.data.slice(startIndex, endIndex);
-            setClients(slicedClients);
-        } catch (error) {
-            console.error("Error fetching CLIENTS:", error);
-        }
-    };
-    const fetchClients = async () => {
-        const token = localStorage.getItem('token');
-        console.log(token)
-        if (!token) {
-            return null;
-        }
-        try {
-            const response = await axios.get(
-                "http://localhost:8060/api/Gestionnaire/clients", {
+                "http://localhost:8060/api/Admin/gestionnaires", {
+                headers: {
+                    Authorization: token,
+                },
+            });
+            const rolesResponse = await axios.get(
+                "http://localhost:8060/api/Roles/allRoles", {
                 headers: {
                     Authorization: token,
                 },
@@ -170,15 +170,93 @@ function clientList() {
 
             const startIndex = (page - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
-            const slicedClients = response.data.slice(startIndex, endIndex);
+            const slicedGestionnaires = response.data.slice(startIndex, endIndex);
 
-            setClients(slicedClients);
+            setGestionnaires(slicedGestionnaires);
+            setRoles(rolesResponse.data); // Stockez la liste des rôles dans l'état des rôles
+
         } catch (error) {
-            console.error("Error fetching CLIENTS:", error);
+            console.error("Error fetching Gestionnaires:", error);
+        }
+    };
+    const fetchGestionnaires = async () => {
+        const token = localStorage.getItem('token');
+        console.log(token)
+        if (!token) {
+            return null;
+        }
+        try {
+            const response = await axios.get(
+                "http://localhost:8060/api/Admin/gestionnaires", {
+                headers: {
+                    Authorization: token,
+                },
+            });
+            const rolesResponse = await axios.get(
+                "http://localhost:8060/api/Roles/allRoles", {
+                headers: {
+                    Authorization: token,
+                },
+            });
+
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const slicedGestionnaires = response.data.slice(startIndex, endIndex);
+
+            setGestionnaires(slicedGestionnaires);
+            setRoles(rolesResponse.data); // Stockez la liste des rôles dans l'état des rôles
+
+        } catch (error) {
+            console.error("Error fetching Gestionnaires:", error);
+        }
+    };
+
+    const handleRoleChange = (event) => {
+        const selectedRoleName = event.target.value;
+        // Trouver le rôle correspondant dans la liste des rôles disponibles
+        const selectedRole = roles.find((role) => role.name === selectedRoleName);
+        setSelectedGestionnaireForRole(prevState => ({
+            ...prevState,
+            roles: [selectedRole]
+        }));
+    };
+    const handleUpdateRole = async () => {
+        if (!selectedGestionnaireForRole || !selectedGestionnaireForRole.roles || selectedGestionnaireForRole.roles.length === 0) {
+            console.error("Invalid selectedGestionnaireForRole or roles");
+            return;
+        }
+
+        const selectedRoleName = selectedGestionnaireForRole.roles[0].name; // Récupérer le nom du rôle sélectionné
+        const formData = selectedRoleName; // Envoyer uniquement le nom du rôle
+
+        try {
+            const response = await axios.put(
+                `http://localhost:8060/api/Admin/updateRole/${selectedGestionnaireForRole.id}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: token,
+                        'Content-Type': 'application/json', // Utiliser 'text/plain' comme type de contenu pour envoyer uniquement une chaîne de caractères
+                    },
+                }
+            );
+
+            console.log('Rôle du gestionnaire mis à jour:', response.data);
+            refreshGestionnairesList();
+            handleCloseRoleDialog();
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour du rôle du gestionnaire:', error);
         }
     };
 
 
+
+
+
+    const handleCloseRoleDialog = () => {
+
+        setOpenRoleDialog(false);
+    };
 
     return (
         <Box >
@@ -256,8 +334,8 @@ function clientList() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {clients.map((client) => (
-                                    <TableRow key={client.id}>
+                                {gestionnaires.map((gestionnaire) => (
+                                    <TableRow key={gestionnaire.id}>
                                         <TableCell>
                                             <Typography
                                                 sx={{
@@ -265,7 +343,7 @@ function clientList() {
                                                     fontWeight: "500",
                                                 }}
                                             >
-                                                {client.id}
+                                                {gestionnaire.id}
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
@@ -282,7 +360,7 @@ function clientList() {
                                                             fontWeight: "600",
                                                         }}
                                                     >
-                                                        {client.name}
+                                                        {gestionnaire.name}
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -301,7 +379,7 @@ function clientList() {
                                                             fontWeight: "600",
                                                         }}
                                                     >
-                                                        {client.username}
+                                                        {gestionnaire.username}
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -320,7 +398,7 @@ function clientList() {
                                                             fontWeight: "600",
                                                         }}
                                                     >
-                                                        {client.email}
+                                                        {gestionnaire.email}
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -332,9 +410,9 @@ function clientList() {
                                                     pl: "4px",
                                                     pr: "4px",
                                                     backgroundColor: (() => {
-                                                        if (client.enabled == 0) {
+                                                        if (gestionnaire.enabled == 0) {
                                                             return "#ed3026";
-                                                        } else if (client.enabled == 1) {
+                                                        } else if (gestionnaire.enabled == 1) {
                                                             return "primary.main";
                                                         } else {
                                                             return "black";
@@ -343,50 +421,33 @@ function clientList() {
                                                     color: "#fff",
                                                 }}
                                                 size="small"
-                                                label={client.enabled == 1 ? "Enabled" : "Disabled"}
+                                                label={gestionnaire.enabled == 1 ? "Enabled" : "Disabled"}
                                             />
                                         </TableCell>
 
                                         <TableCell align="right">
-                                            <Button
-                                                variant="outlined"
-                                                onClick={() => handleOpenUpdateForm(client.id)}
+                                            <Box
+                                                sx={{
+                                                    mb: 2,
+                                                }}
+                                            >
+                                                <ButtonGroup variant="outlined" aria-label="outlined button group">
+                                                    <Button
 
-                                            >
-                                                Modifier
-                                            </Button>
-                                            <Fab
-                                                color="primary"
-                                                size="small"
-                                                sx={{
-                                                    mr: 1,
-                                                    mb: {
-                                                        xs: 0,
-                                                        sm: 1,
-                                                        lg: 0,
-                                                    },
-                                                    marginLeft: 2
-                                                }}
-                                                onClick={() => handleViewDetails(client.id)}
-                                            >
-                                                <InfoIcon />
-                                            </Fab>
-                                            <Fab
-                                                color='secondary'
-                                                size="small"
-                                                sx={{
-                                                    mr: 1,
-                                                    mb: {
-                                                        xs: 0,
-                                                        sm: 1,
-                                                        lg: 0,
-                                                    },
-                                                    marginLeft: 2
-                                                }}
-                                                onClick={() => handleDeleteClient(client.id)}
-                                            >
-                                                <DeleteOutlineIcon htmlColor='white' />
-                                            </Fab>
+                                                        onClick={() => handleOpenUpdateForm(gestionnaire.id)}
+
+                                                    >
+                                                        Modifier
+                                                    </Button>
+                                                    <Button
+                                                        variant="outlined"
+                                                        onClick={() => handleOpenRoleDialog(gestionnaire)}
+                                                    >
+                                                        Rôle
+                                                    </Button>
+                                                    <Button color='secondary' onClick={() => handleDeleteGestionnaire(gestionnaire.id)} > Supprimer </Button>
+                                                </ButtonGroup>
+                                            </Box>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -398,16 +459,14 @@ function clientList() {
 
             <Dialog sx={{ textAlign: "left" }} open={showUpdateForm} onClose={handleCloseUpdateDialog}>
                 <DialogContent sx={{ textAlign: "left", overflowX: "auto" }}>
-                    {selectedClient ? (
-                        <UpdateClient
-                            selectedClient={selectedClient}
-                            setSelectedClient={setSelectedClient}
-                            refreshClientList={refreshClientList}
-                            handleCloseUpdateDialog={handleCloseUpdateDialog}
-                        />
-                    ) : (
-                        <Typography>Aucun client  sélectionné.</Typography>
-                    )}                </DialogContent>
+                    <UpdateGestionnaire
+                        selectedGestionnaire={selectedGestionnaire}
+                        setSelectedGestionnaire={setSelectedGestionnaire}
+
+                        refreshClientList={refreshGestionnairesList}
+                        handleCloseUpdateDialog={handleCloseUpdateDialog}
+                    />
+                </DialogContent>
                 <DialogActions>
 
 
@@ -438,11 +497,11 @@ function clientList() {
             </Dialog>
             <Dialog sx={{ textAlign: "left" }} open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
                 <DialogContent sx={{ textAlign: "left", overflowX: "auto" }}>
-                    {selectedClient ? (
+                    {/*  {selectedClient ? (
                         <ClientDetails client={selectedClient} />
                     ) : (
                         <Typography>Aucun client  sélectionné.</Typography>
-                    )}                </DialogContent>
+                    )}       */}          </DialogContent>
                 <DialogActions>
 
 
@@ -473,14 +532,48 @@ function clientList() {
             </Dialog>
             <Dialog sx={{ textAlign: "left" }} open={showAddClient} onClose={handleCloseAddClient}>
                 <DialogContent sx={{ textAlign: "left", overflowX: "auto" }}>
-                    <AddClient
+                    <AddGestionnaire
                         // Pass any required props to the AddClient component, if needed
-                        refreshClientList={refreshClientList}
+                        refreshGestionnairesList={refreshGestionnairesList}
                         handleCloseAddClient={handleCloseAddClient}
                     />
                 </DialogContent>
                 <DialogActions>
                     {/* Optionally, add buttons or actions for the AddClient dialog */}
+                </DialogActions>
+            </Dialog>
+            <Dialog
+                open={openRoleDialog}
+                onClose={handleCloseRoleDialog}
+            >
+                <DialogTitle>Modifier le rôle</DialogTitle>
+                <DialogContent>
+                    {/* Affichez ici le formulaire de modification du rôle */}
+                    {selectedGestionnaireForRole && (
+                        <>
+                            <Typography variant="h6">Nom du gestionnaire: {selectedGestionnaireForRole.name}</Typography>
+                            <Select
+                                value={
+                                    selectedGestionnaireForRole.roles && selectedGestionnaireForRole.roles.length > 0
+                                        ? selectedGestionnaireForRole.roles[0].name
+                                        : ""
+                                }
+                                onChange={handleRoleChange}
+                            >
+                                {/* Affichez ici la liste des rôles disponibles (récupérée depuis le backend) */}
+                                {roles.map((role) => (
+                                    <MenuItem key={role.id} value={role.name}>
+                                        {role.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </>
+                    )}
+                </DialogContent>
+
+                <DialogActions>
+                    <Button onClick={handleCloseRoleDialog}>Annuler</Button>
+                    <Button onClick={handleUpdateRole}>Enregistrer</Button>
                 </DialogActions>
             </Dialog>
 
@@ -520,7 +613,7 @@ function clientList() {
 
 
                     }}
-                    onClick={handleNextPage} disabled={clients.length < itemsPerPage}
+                    onClick={handleNextPage} disabled={gestionnaires.length < itemsPerPage}
                 >
                     <ArrowForwardIosIcon />
                 </Fab>
@@ -534,4 +627,4 @@ function clientList() {
     );
 }
 
-export default clientList
+export default GestionnaireList

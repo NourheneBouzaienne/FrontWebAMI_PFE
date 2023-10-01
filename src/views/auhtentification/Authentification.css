@@ -126,6 +126,10 @@
     border-bottom: 1.5px solid #204393;
     padding-bottom: 5px;
   }
+  .errorMessage{
+    color: #ed3026;
+    margin-bottom: 12px
+  }
   
   .formFieldCheckboxLabel {
     color: #204393;

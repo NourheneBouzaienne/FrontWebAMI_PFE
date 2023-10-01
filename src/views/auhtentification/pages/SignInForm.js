@@ -30,11 +30,21 @@ const SignInForm = () => {
 
             if (response.status === 200) {
                 localStorage.setItem("token", "Bearer " + response.data.accessToken);
+                const userRole = response.data.roles[0];
                 console.log(response.data.accessToken)
+                localStorage.setItem('userRole', userRole);
                 // Stockez le token dans le localStorage
-                navigate("/dashboards/dashboard1"); // Utilisez useNavigate pour naviguer vers le tableau de bord
+                //navigate("/dashboards/dashboard1"); // Utilisez useNavigate pour naviguer vers le tableau de bord
+                // Redirigez l'utilisateur en fonction de son rôle
+                if (userRole === "ROLE_GESTIONNAIRE") {
+                    navigate("/Clients");
+                } else if (userRole === "ROLE_ADMIN") {
+                    navigate("/dashboards/dashboard1");
+                } else {
+                    // Redirigez vers une page par défaut en cas de rôle inconnu
+                    navigate("/login/signin");
+                }
             }
-
         } catch (error) {
             setErrorMessage("Veuillez vérifier votre identifiant et/ou mot de passe");
         }
@@ -73,8 +83,8 @@ const SignInForm = () => {
                 {errorMessage && <div className="errorMessage">{errorMessage}</div>}
 
                 <div className="formField">
-                    <button className="formFieldButton">Sign In</button>{" "}
-                    <Link to="/" className="formFieldLink">
+                    <button id="formFieldButton" className="formFieldButton">Sign In</button>{" "}
+                    <Link to="/login/signup" className="formFieldLink">
                         Create an account
                     </Link>
                 </div>

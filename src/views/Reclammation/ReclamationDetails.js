@@ -31,7 +31,7 @@ import TimelineOppositeContent from "@mui/lab/TimelineOppositeContent";
 import axios from "axios";
 
 
-const ReclamationDetails = ({ reclamation }) => {
+const ReclamationDetails = ({ reclamation, handleCloseDetailDialog }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [reponse, setReponse] = useState("");
     const [showTextarea, setShowTextarea] = useState(false);
@@ -41,6 +41,8 @@ const ReclamationDetails = ({ reclamation }) => {
 
 
     const flattenedReclamation = [
+
+
         { key: "Id", value: reclamation.id },
         { key: "Catégorie", value: reclamation.categ },
         { key: "Date", value: reclamation.dateCreation },
@@ -56,20 +58,26 @@ const ReclamationDetails = ({ reclamation }) => {
     }
 
     const handleRepondre = () => {
-
-        axios.post(`http://localhost:8060/api/auth/reclammation/${reclamation.id}/repondre`, reponse, {
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: token
+        axios.post(
+            `http://localhost:8060/api/auth/reclammation/${reclamation.id}/repondreWithNotification`,
+            reponse, // Envoyer directement la chaîne de caractères sans objet JSON
+            {
+                headers: {
+                    'Content-Type': 'text/plain', // Définir le type de contenu comme "text/plain"
+                    Authorization: token
+                }
             }
-        })
+        )
             .then(() => {
                 console.log(reponse);
+                handleCloseDetailDialog()
             })
             .catch((error) => {
                 console.log(error);
             });
     };
+
+
 
     const handleOptionSelect = (option) => {
         if (option === "Répondre") {

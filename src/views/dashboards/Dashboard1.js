@@ -7,6 +7,9 @@ import {
   ProductPerformance,
   DailyActivities,
 } from "./dashboard1-components";
+import SinistresChart from "../Sinistres/SinistresChart";
+import SinistresByTypeChart from "../Sinistres/SinistresByTypeChart";
+import PowerBIEmbed from "../../components/PowerBIEmbed";
 
 const Dashboard1 = () => {
   // 2
@@ -15,9 +18,13 @@ const Dashboard1 = () => {
     <Box>
       <Grid container spacing={0}>
         {/* ------------------------- row 1 ------------------------- */}
-        <Grid item xs={12} lg={12}>
+        {/* <Grid item xs={12} lg={12}>
           <SalesOverview />
-        </Grid>
+        </Grid> */}
+        {/*   <Grid item xs={12} lg={12}>    <SinistresChart /> </Grid> */}
+
+        {/*   <Grid item xs={12} lg={12}>  <SinistresByTypeChart /> </Grid>
+ */}
         {/* ------------------------- row 2 ------------------------- */}
         {/*  <Grid item xs={12} lg={4}>
           <DailyActivities />
@@ -28,6 +35,10 @@ const Dashboard1 = () => {
         {/* ------------------------- row 3 ------------------------- */}
         {/*  <BlogCard /> */}
       </Grid>
+
+
+
+      <PowerBIEmbed> </PowerBIEmbed>
     </Box>
   );
 };

@@ -21,7 +21,8 @@ import {
 } from "@mui/material";
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import InfoIcon from '@mui/icons-material/Info';
-
+import ArrowBackIosNewOutlinedIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import axios from "axios";
 import { DailyActivities } from "../dashboards/dashboard1-components";
@@ -35,11 +36,22 @@ function ReclamationsList() {
     const [selectedReclamation, setSelectedReclamation] = useState(null);
     const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
 
-
+    const [page, setPage] = useState(1);
+    const itemsPerPage = 5; // Number of items to display per page
 
     useEffect(() => {
         fetchReclamations();
-    }, []);
+    }, [page]);
+    const handlePreviousPage = () => {
+        if (page > 1) {
+            setPage(page - 1);
+        }
+    };
+
+    const handleNextPage = () => {
+        setPage(page + 1);
+    };
+
 
     const handleViewDetails = (reclamationId) => {
         fetchReclamationDetails(reclamationId);
@@ -59,7 +71,14 @@ function ReclamationsList() {
                 },
             });
 
-            setReclamations(response.data);
+
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+
+            const slicedReclamations = response.data.slice(startIndex, endIndex);
+
+
+            setReclamations(slicedReclamations);
         } catch (error) {
             console.error("Error fetching reclamations:", error);
         }
@@ -311,7 +330,9 @@ function ReclamationsList() {
             <Dialog sx={{ textAlign: "left" }} open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
                 <DialogContent sx={{ textAlign: "left", overflowX: "auto" }}>
                     {selectedReclamation ? (
-                        <ReclamationDetails reclamation={selectedReclamation} />
+                        <ReclamationDetails reclamation={selectedReclamation}
+                            handleCloseDetailDialog={handleCloseDetailsDialog}
+                        />
                     ) : (
                         <Typography>Aucune réclamation sélectionnée.</Typography>
                     )}                </DialogContent>
@@ -319,6 +340,52 @@ function ReclamationsList() {
                     <Button onClick={handleCloseDetailsDialog}>Fermer</Button>
                 </DialogActions>
             </Dialog>
+            {/* Pagination controls */}
+            <Box display="flex" justifyContent="center" my={2}>
+
+                <Button>Previous</Button>
+
+                <Fab
+                    color="primary"
+                    size="small" // Set the size to "small"
+                    sx={{
+                        mr: 1,
+                        mb: {
+                            xs: 1,
+                            sm: 0,
+                            lg: 0,
+                        },
+
+
+                    }}
+                    onClick={handlePreviousPage} disabled={page === 1}
+                >
+                    <ArrowBackIosNewOutlinedIcon />
+                </Fab>
+
+                <Fab
+                    color="primary"
+                    size="small" // Set the size to "small"
+                    sx={{
+                        mr: 1,
+                        mb: {
+                            xs: 1,
+                            sm: 0,
+                            lg: 0,
+                        },
+
+
+                    }}
+                    onClick={handleNextPage} disabled={reclamations.length < itemsPerPage}
+                >
+                    <ArrowForwardIosIcon />
+                </Fab>
+
+
+
+
+                <Button>Next</Button>
+            </Box>
 
         </Box>
     );

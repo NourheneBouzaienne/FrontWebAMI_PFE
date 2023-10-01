@@ -24,6 +24,9 @@ const baseTheme = createTheme({
       main: "#ed3026",
 
     },
+    light: {
+      main: "#fff",
+    },
     background: {
       default: "#fff",
     },

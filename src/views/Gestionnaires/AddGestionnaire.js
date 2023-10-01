@@ -22,28 +22,17 @@ import axios from "axios";
 
 const numbers = [
     {
-        value: "Cin",
-        label: "Cin",
+        value: "gestionnaire",
+        label: "Gestionnaire",
     },
     {
-        value: "Passeport",
-        label: "Passeport",
+        value: "admin",
+        label: "Administrateur",
     },
-    {
-        value: "CarteSej",
-        label: "Carte Séjour",
-    },
-    {
-        value: "Matfisc",
-        label: "Matricule fiscale",
-    },
-    {
-        value: "RegistComm",
-        label: "Registre du commerce",
-    },
+
 ];
 
-function addClient({ refreshClientList, handleCloseAddClient }) {
+function AddGestionnaire({ refreshGestionnairesList, handleCloseAddClient }) {
     const [state, setState] = React.useState({
         checkedA: false,
         checkedB: false,
@@ -54,55 +43,51 @@ function addClient({ refreshClientList, handleCloseAddClient }) {
         setState({ ...state, [event.target.name]: event.target.checked });
     };
 
-    const [selectedClient, setSelectedClient] = React.useState({
-        typePers: "",
+    const [selectedGestionnaire, setSelectedGestionnaire] = React.useState({
         name: "",
-        typeIDNT: "",
         username: "",
         email: "",
         numTel: "",
-        adresse: "",
         enabled: true,
         password: "",
         activationCode: "",
-        isAuthentificated: false,
         roles: [],
     });
 
     const [passwordError, setPasswordError] = React.useState("");
 
-    const handleChangePassword = (event) => {
-        setSelectedClient({ ...selectedClient, password: event.target.value });
-    };
-
-    const handleChangeConfirmPassword = (event) => {
-        setSelectedClient({
-            ...selectedClient,
-            confirmPassword: event.target.value,
-        });
-    };
+    /*  const handleChangePassword = (event) => {
+         setSelectedClient({ ...selectedClient, password: event.target.value });
+     };
+ 
+     const handleChangeConfirmPassword = (event) => {
+         setSelectedClient({
+             ...selectedClient,
+             confirmPassword: event.target.value,
+         });
+     }; */
     const handleChange2 = (event) => {
-        setSelectedClient({ ...selectedClient, typePers: event.target.value });
+        setSelectedGestionnaire({ ...selectedGestionnaire, typePers: event.target.value });
     };
 
     const handleChange3 = (event) => {
-        setSelectedClient({ ...selectedClient, typeIDNT: event.target.value });
+        setSelectedGestionnaire({ ...selectedGestionnaire, roles: event.target.value });
     };
     const token = localStorage.getItem('token');
     if (!token) {
         return null;
     }
     const handleSubmit = async () => {
-        const formData = { ...selectedClient };
-        if (formData.password !== formData.confirmPassword) {
-            setPasswordError("Erreur: Les mots de passe ne correspondent pas.");
-            return;
-        }
-
-        setPasswordError("");
+        const formData = { ...selectedGestionnaire };
+        /*  if (formData.password !== formData.confirmPassword) {
+             setPasswordError("Erreur: Les mots de passe ne correspondent pas.");
+             return;
+         }
+  */
+        //setPasswordError("");
         try {
             const response = await axios.post(
-                "http://localhost:8060/api/Gestionnaire/addClient",
+                "http://localhost:8060/api/Admin/addGestionnaire",
                 formData,
                 {
                     headers: {
@@ -112,8 +97,8 @@ function addClient({ refreshClientList, handleCloseAddClient }) {
                 }
             );
 
-            console.log('Client added:', response.data);
-            refreshClientList();
+            console.log('Gestionnaire added:', response.data);
+            refreshGestionnairesList();
             handleCloseAddClient();
 
 
@@ -132,56 +117,34 @@ function addClient({ refreshClientList, handleCloseAddClient }) {
                 <Box sx={{ padding: "15px 30px" }} display="flex" alignItems="center">
                     <Box flexGrow={1}>
                         <Typography sx={{ fontSize: "18px", fontWeight: "500" }}>
-                            Ajouter un client
+                            Ajouter un gestionnaire
                         </Typography>
                     </Box>
                 </Box>
                 <Divider />
                 <CardContent sx={{ padding: "30px" }}>
                     <form>
-                        <Grid item lg={4} md={6} sm={12}>
-                            <FormControl component="fieldset">
-                                <RadioGroup
-                                    aria-label="Type Personne"
-                                    name="Type Personne"
-                                    value={selectedClient.typePers}
-                                    onChange={handleChange2}
-                                    row
-                                    sx={{ marginBottom: 2 }}
-                                >
-                                    <FormControlLabel
-                                        value="Morale"
-                                        control={<Radio />}
-                                        label="Morale"
-                                    />
-                                    <FormControlLabel
-                                        value="Physique"
-                                        control={<Radio />}
-                                        label="Physique"
-                                    />
-                                </RadioGroup>
-                            </FormControl>
-                        </Grid>
+
                         <TextField
                             id="name"
                             label="Name"
                             variant="outlined"
-                            value={selectedClient.name}
+                            value={selectedGestionnaire.name}
                             fullWidth
                             sx={{
                                 mb: 2,
                             }}
                             onChange={(e) =>
-                                setSelectedClient({ ...selectedClient, name: e.target.value })
+                                setSelectedGestionnaire({ ...selectedGestionnaire, name: e.target.value })
                             }
                         />
                         <TextField
                             fullWidth
-                            id="typeIDNT"
+                            id="Role"
                             variant="outlined"
                             select
-                            label="Type Identifiant"
-                            value={selectedClient.typeIDNT}
+                            label="Role"
+                            value={selectedGestionnaire.roles}
                             onChange={handleChange3}
                             sx={{ mb: 2 }}
                         >
@@ -195,13 +158,13 @@ function addClient({ refreshClientList, handleCloseAddClient }) {
                             id="username"
                             label="Idantifiant"
                             variant="outlined"
-                            value={selectedClient.username}
+                            value={selectedGestionnaire.username}
                             fullWidth
                             sx={{
                                 mb: 2,
                             }}
                             onChange={(e) =>
-                                setSelectedClient({ ...selectedClient, username: e.target.value })
+                                setSelectedGestionnaire({ ...selectedGestionnaire, username: e.target.value })
                             }
                         />
                         <TextField
@@ -209,16 +172,16 @@ function addClient({ refreshClientList, handleCloseAddClient }) {
                             label="Email"
                             type="email"
                             variant="outlined"
-                            value={selectedClient.email}
+                            value={selectedGestionnaire.email}
                             fullWidth
                             sx={{
                                 mb: 2,
                             }}
                             onChange={(e) =>
-                                setSelectedClient({ ...selectedClient, email: e.target.value })
+                                setSelectedGestionnaire({ ...selectedGestionnaire, email: e.target.value })
                             }
                         />
-                        <TextField
+                        {/*  <TextField
                             id="password"
                             label="Mot de passe"
                             type="password"
@@ -247,23 +210,23 @@ function addClient({ refreshClientList, handleCloseAddClient }) {
                                 {passwordError}
                             </Typography>
                         )}
-
+ */}
 
                         <TextField
                             id="numTel"
                             label="Numéro Téléphone"
                             type="number"
                             variant="outlined"
-                            value={selectedClient.numTel}
+                            value={selectedGestionnaire.numTel}
                             fullWidth
                             sx={{
                                 mb: 2,
                             }}
                             onChange={(e) =>
-                                setSelectedClient({ ...selectedClient, numTel: e.target.value })
+                                setSelectedGestionnaire({ ...selectedGestionnaire, numTel: e.target.value })
                             }
                         />
-                        <TextField
+                        {/*   <TextField
                             id="adresse"
                             label="Adresse"
                             multiline
@@ -277,11 +240,11 @@ function addClient({ refreshClientList, handleCloseAddClient }) {
                             onChange={(e) =>
                                 setSelectedClient({ ...selectedClient, adresse: e.target.value })
                             }
-                        />
+                        /> */}
                         <FormControlLabel
                             control={
                                 <Switch
-                                    checked={selectedClient.enabled}
+                                    checked={selectedGestionnaire.enabled}
                                     onChange={handleSwitchChange}
                                     color="primary"
                                 />
@@ -300,4 +263,4 @@ function addClient({ refreshClientList, handleCloseAddClient }) {
     );
 }
 
-export default addClient;
+export default AddGestionnaire;

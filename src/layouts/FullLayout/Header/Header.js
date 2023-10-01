@@ -1,5 +1,5 @@
 import React from "react";
-//import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined';
@@ -7,6 +7,8 @@ import AddToPhotosOutlinedIcon from '@mui/icons-material/AddToPhotosOutlined';
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 
 import {
   AppBar,
@@ -25,6 +27,15 @@ import userimg from "../../../assets/images/users/user.jpg";
 
 const Header = (props) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const navigate = useNavigate();
+
+
+  const handleLogout = () => {
+    // Supprimer le token d'authentification du localStorage
+    localStorage.removeItem("token");
+    // Rediriger l'utilisateur vers la page de connexion
+    navigate('/login/signin');
+  };
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -72,7 +83,7 @@ const Header = (props) => {
         >
           <MenuOutlinedIcon width="20" height="20" />
         </IconButton>
-        <IconButton
+        {/*   <IconButton
           aria-label="menu"
           color="inherit"
           aria-controls="dd-menu"
@@ -80,7 +91,7 @@ const Header = (props) => {
           onClick={handleClick5}
         >
           <AddToPhotosOutlinedIcon />
-        </IconButton>
+        </IconButton> */}
         <Menu
           id="dd-menu"
           anchorEl={anchorEl5}
@@ -151,7 +162,7 @@ const Header = (props) => {
         {/* ------------------------------------------- */}
         <IconButton
           aria-label="menu"
-          color="inherit"
+          color="light"
           aria-controls="notification-menu"
           aria-haspopup="true"
           onClick={handleClick}
@@ -205,13 +216,15 @@ const Header = (props) => {
               alignItems: "center",
             }}
           >
-            <Avatar
+            <AccountCircleOutlinedIcon
               src={userimg}
               alt={userimg}
               sx={{
                 width: "30px",
                 height: "30px",
+
               }}
+              color="light"
             />
           </Box>
         </Button>
@@ -231,7 +244,7 @@ const Header = (props) => {
             },
           }}
         >
-          <MenuItem onClick={handleClose4}>
+          <MenuItem component={Link} to="/Profil" onClick={handleClose4}>
             <Avatar
               sx={{
                 width: "35px",
@@ -243,7 +256,7 @@ const Header = (props) => {
                 ml: 2,
               }}
             >
-              My account
+              Mon profil
             </Box>
           </MenuItem>
           <Divider />
@@ -259,7 +272,7 @@ const Header = (props) => {
             </ListItemIcon>
             Settings
           </MenuItem>
-          <MenuItem onClick={handleClose4}>
+          <MenuItem onClick={handleLogout}>
             <ListItemIcon>
               <LogoutOutlinedIcon fontSize="small" />
             </ListItemIcon>

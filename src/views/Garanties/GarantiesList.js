@@ -19,25 +19,31 @@ import {
     Button,
     Select,
     MenuItem,
-    Fab
+    Fab,
+    TableContainer,
+    TextField,
+    Alert
 } from "@mui/material";
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import InfoIcon from '@mui/icons-material/Info';
 import AddToPhotosOutlinedIcon from '@mui/icons-material/AddToPhotosOutlined';
-import ArrowBackIosNewOutlinedIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import IconButton from '@mui/material/IconButton';
 
 import HighlightOffOutlinedIcon from '@mui/icons-material/HighlightOffOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import axios from "axios";
 import { DailyActivities } from "../dashboards/dashboard1-components";
-import ClientDetails from "./clientDetails";
-import UpdateClient from './updateClient'
-import AddClient from "./addClient";
+import ArrowBackIosNewOutlinedIcon from '@mui/icons-material/ArrowBackIosNewOutlined';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { format } from "date-fns";
+import { DevicesFoldSharp } from "@mui/icons-material";
+import AddHomeWorkOutlinedIcon from '@mui/icons-material/AddHomeWorkOutlined';
+import ForwardToInboxOutlinedIcon from '@mui/icons-material/ForwardToInboxOutlined';
 
+function GarantiesList() {
+    const [devis, setDevis] = useState([]);
 
-function clientList() {
-    const [clients, setClients] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedState, setSelectedState] = useState("");
     const [selectedClientId, setSelectedClientId] = useState("");
@@ -45,13 +51,18 @@ function clientList() {
     const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
     const [showUpdateForm, setShowUpdateForm] = useState(false);
     const [showAddClient, setShowAddClient] = useState(false);
+    const [selectedSinistre, setSelectedSinistre] = useState(null);
+    const [openCard, setOpenCard] = useState(false);
+
+    const [selectedDevis, setSelectedDevis] = useState(null);
+    const [emailContent, setEmailContent] = useState("");
+    const [showAlert, setShowAlert] = useState(false);
 
 
     const [page, setPage] = useState(1);
     const itemsPerPage = 5; // Number of items to display per page
-
     useEffect(() => {
-        fetchClients();
+        fetchDevis();
     }, [page]);
 
     const handlePreviousPage = () => {
@@ -63,6 +74,8 @@ function clientList() {
     const handleNextPage = () => {
         setPage(page + 1);
     };
+
+
     const handleOpenDetailsDialog = () => {
         setOpenDetailsDialog(true);
     };
@@ -79,8 +92,8 @@ function clientList() {
         setShowUpdateForm(false);
     };
 
-    const handleViewDetails = (clientId) => {
-        fetchClientDetails(clientId);
+    const handleViewDetails = (sinistreId) => {
+        fetchSinistresDetails(sinistreId);
         handleOpenDetailsDialog();
     };
 
@@ -90,34 +103,18 @@ function clientList() {
         // Replace "formData" with the actual data from the form
         // Don't forget to set setShowUpdateForm(false) to close the form after submission
     };
-    const handleDeleteClient = async (clientId) => {
 
-        try {
-            // Make an API call to delete the client
-            await axios.delete(`http://localhost:8060/api/Gestionnaire/deleteClient/${clientId}`, {
-                headers: {
-                    Authorization: token,
-                },
-            });
 
-            console.log(`Client with ID ${clientId} deleted successfully.`);
-            // Call the function to refresh the client list after successful deletion
-            refreshClientList();
-        } catch (error) {
-            console.error(`Error deleting client with ID ${clientId}:`, error);
-        }
-    };
-
-    const fetchClientDetails = async (clientId) => {
+    const fetchSinistresDetails = async (sinistreId) => {
         try {
             const response = await axios.get(
-                `http://localhost:8060/api/Gestionnaire/client/${clientId}`, {
+                `http://localhost:8060/api/Gestionnaire/sinistre/${sinistreId}`, {
                 headers: {
                     Authorization: token,
                 },
             });
             console.log(token)
-            setSelectedClient(response.data);
+            setSelectedSinistre(response.data);
         } catch (error) {
             console.error('Erreur lors de la récupération des détails du client :', error);
         }
@@ -136,25 +133,29 @@ function clientList() {
         return null;
     }
 
-    const refreshClientList = async () => {
+    const refreshSinistresList = async () => {
         try {
             const response = await axios.get(
-                "http://localhost:8060/api/Gestionnaire/clients",
+                "http://localhost:8060/api/Gestionnaire/sinistres",
                 {
                     headers: {
                         Authorization: token,
                     },
                 }
             );
+
             const startIndex = (page - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
-            const slicedClients = response.data.slice(startIndex, endIndex);
-            setClients(slicedClients);
+
+            // Slice the sinistres data based on the calculated indices
+            const slicedSinistres = response.data.slice(startIndex, endIndex);
+
+            setSinistres(slicedSinistres);
         } catch (error) {
-            console.error("Error fetching CLIENTS:", error);
+            console.error("Error fetching Sinistress:", error);
         }
     };
-    const fetchClients = async () => {
+    const fetchDevis = async () => {
         const token = localStorage.getItem('token');
         console.log(token)
         if (!token) {
@@ -162,26 +163,113 @@ function clientList() {
         }
         try {
             const response = await axios.get(
-                "http://localhost:8060/api/Gestionnaire/clients", {
+                "http://localhost:8060/api/DemandeGarantie/Garanties", {
                 headers: {
                     Authorization: token,
                 },
             });
 
+
             const startIndex = (page - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
-            const slicedClients = response.data.slice(startIndex, endIndex);
 
-            setClients(slicedClients);
+            const slicedDevis = response.data.slice(startIndex, endIndex);
+
+            setDevis(slicedDevis);
+
         } catch (error) {
-            console.error("Error fetching CLIENTS:", error);
+            console.error("Error fetching Devis:", error);
         }
+    };
+
+    const handleRetrieveGaranties = async (devisId) => {
+        try {
+            const response = await axios.get(
+                `http://localhost:8060/api/Gestionnaire/devis/${devisId}`,
+                {
+                    headers: {
+                        Authorization: token,
+                    },
+                }
+            );
+            setSelectedDevis(response.data);
+
+        } catch (error) {
+            console.error("Error retrieving garanties :", error);
+        }
+    };
+
+    /* const generateEmailContent = () => {
+        // Customize the email content based on the selected pack, type occupant, and selectedDevis
+        const packInfo = selectedDevis?.pack ? `pack: ${selectedDevis.pack.type}` : '';
+        const typeOccupantInfo = selectedDevis?.typeOccupant ? `type Occupant: ${selectedDevis.typeOccupant.nom}` : '';
+
+
+        return `Vous avez choisi le  ${packInfo}  pour un ${typeOccupantInfo} pour le produit Multirisque Habitation le montant total en TTC est :`;
+    }; */
+    const sendEmail = () => {
+        // Check if selectedDevis is not null before accessing its properties
+        if (selectedDevis && selectedDevis.user) {
+            const emailRequest = {
+                email: selectedDevis.user.email,
+                name: selectedDevis.user.name,
+                subject: selectedDevis.catégorie,
+                content: emailContent,
+                packType: selectedDevis.pack.type,
+                typeOccupantNom: selectedDevis.typeOccupant.nom,
+            };
+
+            axios.post("http://localhost:8060/api/Gestionnaire/sendEmail", emailRequest, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: token,
+                },
+            })
+                .then((response) => {
+                    console.log("E-mail envoyé avec succès !");
+                    setShowAlert(true);
+                })
+                .catch((error) => {
+                    console.error("Erreur lors de l'envoi de l'e-mail :", error);
+                });
+        }
+    };
+
+    const handleOpenCard = (devis) => {
+        handleRetrieveGaranties(devis.id);
+        setOpenCard(true);
+    };
+
+    const handleOpenDialog = () => {
+        setOpenDialog(true);
+    };
+
+    /*  const handleCloseDialog = () => {
+         setOpenDialog(false);
+     }; */
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+        setEmailContent(""); // Réinitialiser le contenu de l'e-mail lorsque la boîte de dialogue est fermée
     };
 
 
 
+    const handleSendEmail = (devis) => {
+        setSelectedDevis(devis);
+        if (devis && devis.user && devis.user.email) {
+            // Définir le devis sélectionné pour l'envoi de l'e-mail
+            setSelectedDevis(devis);
+            // Ouvrir la boîte de dialogue pour l'envoi de l'e-mail
+            handleOpenDialog();
+        } else {
+            // Handle the case when selectedDevis or its properties are null
+            console.error("Selected devis or user email is null.");
+        }
+    };
+
     return (
         <Box >
+
             <Box display="flex" justifyContent="flex-end">
                 <Fab
                     color="primary"
@@ -193,7 +281,7 @@ function clientList() {
                             lg: 0,
                         },
                     }}
-                    onClick={handleOpenAddClient}
+
                 >
                     <AddToPhotosOutlinedIcon />
                 </Fab>
@@ -203,7 +291,7 @@ function clientList() {
 
                 <CardContent>
 
-                    <Typography variant="h3">Liste des clients </Typography>
+                    <Typography variant="h3">Liste des demandes de devis </Typography>
                     <Box
                         sx={{
                             overflow: {
@@ -230,24 +318,21 @@ function clientList() {
                                     </TableCell>
                                     <TableCell>
                                         <Typography color="textSecondary" variant="h6">
-                                            Name
+                                            Garantie
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography color="textSecondary" variant="h6">
-                                            Identifiant
+                                            Client
                                         </Typography>
                                     </TableCell>
+
                                     <TableCell>
                                         <Typography color="textSecondary" variant="h6">
-                                            Email
+                                            Numéro contrat
                                         </Typography>
                                     </TableCell>
-                                    <TableCell>
-                                        <Typography color="textSecondary" variant="h6">
-                                            STATUS
-                                        </Typography>
-                                    </TableCell>
+
                                     <TableCell align="right">
                                         <Typography color="textSecondary" variant="h6">
                                             Actions
@@ -256,8 +341,8 @@ function clientList() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {clients.map((client) => (
-                                    <TableRow key={client.id}>
+                                {devis.map((devis) => (
+                                    <TableRow key={devis.id}>
                                         <TableCell>
                                             <Typography
                                                 sx={{
@@ -265,7 +350,17 @@ function clientList() {
                                                     fontWeight: "500",
                                                 }}
                                             >
-                                                {client.id}
+                                                {devis.id}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography
+                                                sx={{
+                                                    fontSize: "15px",
+                                                    fontWeight: "500",
+                                                }}
+                                            >
+                                                {devis.garantie}
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
@@ -282,7 +377,7 @@ function clientList() {
                                                             fontWeight: "600",
                                                         }}
                                                     >
-                                                        {client.name}
+                                                        {devis.user.username}
                                                     </Typography>
                                                 </Box>
                                             </Box>
@@ -301,62 +396,21 @@ function clientList() {
                                                             fontWeight: "600",
                                                         }}
                                                     >
-                                                        {client.username}
-                                                    </Typography>
-                                                </Box>
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box
-                                                sx={{
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                }}
-                                            >
-                                                <Box>
-                                                    <Typography
-                                                        variant="h6"
-                                                        sx={{
-                                                            fontWeight: "600",
-                                                        }}
-                                                    >
-                                                        {client.email}
+
+                                                        {devis.numCNT}
                                                     </Typography>
                                                 </Box>
                                             </Box>
                                         </TableCell>
 
-                                        <TableCell>
-                                            <Chip
-                                                sx={{
-                                                    pl: "4px",
-                                                    pr: "4px",
-                                                    backgroundColor: (() => {
-                                                        if (client.enabled == 0) {
-                                                            return "#ed3026";
-                                                        } else if (client.enabled == 1) {
-                                                            return "primary.main";
-                                                        } else {
-                                                            return "black";
-                                                        }
-                                                    })(),
-                                                    color: "#fff",
-                                                }}
-                                                size="small"
-                                                label={client.enabled == 1 ? "Enabled" : "Disabled"}
-                                            />
-                                        </TableCell>
+
+
+
 
                                         <TableCell align="right">
-                                            <Button
-                                                variant="outlined"
-                                                onClick={() => handleOpenUpdateForm(client.id)}
 
-                                            >
-                                                Modifier
-                                            </Button>
                                             <Fab
-                                                color="primary"
+                                                color="secondary"
                                                 size="small"
                                                 sx={{
                                                     mr: 1,
@@ -367,26 +421,11 @@ function clientList() {
                                                     },
                                                     marginLeft: 2
                                                 }}
-                                                onClick={() => handleViewDetails(client.id)}
+                                                onClick={() => handleSendEmail(devis)}
                                             >
-                                                <InfoIcon />
+                                                <ForwardToInboxOutlinedIcon />
                                             </Fab>
-                                            <Fab
-                                                color='secondary'
-                                                size="small"
-                                                sx={{
-                                                    mr: 1,
-                                                    mb: {
-                                                        xs: 0,
-                                                        sm: 1,
-                                                        lg: 0,
-                                                    },
-                                                    marginLeft: 2
-                                                }}
-                                                onClick={() => handleDeleteClient(client.id)}
-                                            >
-                                                <DeleteOutlineIcon htmlColor='white' />
-                                            </Fab>
+
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -396,91 +435,80 @@ function clientList() {
                 </CardContent>
             </Card>
 
-            <Dialog sx={{ textAlign: "left" }} open={showUpdateForm} onClose={handleCloseUpdateDialog}>
-                <DialogContent sx={{ textAlign: "left", overflowX: "auto" }}>
-                    {selectedClient ? (
-                        <UpdateClient
-                            selectedClient={selectedClient}
-                            setSelectedClient={setSelectedClient}
-                            refreshClientList={refreshClientList}
-                            handleCloseUpdateDialog={handleCloseUpdateDialog}
-                        />
-                    ) : (
-                        <Typography>Aucun client  sélectionné.</Typography>
-                    )}                </DialogContent>
-                <DialogActions>
 
+            <Dialog open={openDialog} onClose={handleCloseDialog} maxHeight="md">
+                <DialogTitle>Envoyer un e-mail</DialogTitle>
+                <DialogContent sx={{ height: "100%" }}>
+                    <TextField
+                        label="Adresse e-mail"
+                        fullWidth
+                        value={selectedDevis?.user?.email || ''} // Add the conditional check here
+                        disabled
+                        sx={{ marginBottom: 2, marginTop: 2 }}
+                    />
+                    <TextField
+                        label="Montant à payer"
+                        variant="outlined"
+                        fullWidth
+                        type="number" // Indique que l'entrée doit être un nombre
+                        inputProps={{ inputMode: 'numeric' }}
+                        value={emailContent}
+                        onChange={(e) => setEmailContent(e.target.value)}
 
-                    <Fab
-                        color="primary"
-                        variant="extended"
-                        sx={{
-                            mr: 1,
-                            mb: {
-                                xs: 1,
-                                sm: 0,
-                                lg: 0,
-                            },
-                        }}
-                    >
-                        < HighlightOffOutlinedIcon />
-                        <Typography
-                            sx={{
-                                ml: 1,
-                                textTransform: "capitalize",
-                            }}
-                            onClick={handleCloseUpdateDialog}
-                        >
-                            Fermer
-                        </Typography>
-                    </Fab>
-                </DialogActions>
-            </Dialog>
-            <Dialog sx={{ textAlign: "left" }} open={openDetailsDialog} onClose={handleCloseDetailsDialog}>
-                <DialogContent sx={{ textAlign: "left", overflowX: "auto" }}>
-                    {selectedClient ? (
-                        <ClientDetails client={selectedClient} />
-                    ) : (
-                        <Typography>Aucun client  sélectionné.</Typography>
-                    )}                </DialogContent>
-                <DialogActions>
-
-
-                    <Fab
-                        color="primary"
-                        variant="extended"
-                        sx={{
-                            mr: 1,
-                            mb: {
-                                xs: 1,
-                                sm: 0,
-                                lg: 0,
-                            },
-                        }}
-                    >
-                        <HighlightOffOutlinedIcon />
-                        <Typography
-                            sx={{
-                                ml: 1,
-                                textTransform: "capitalize",
-                            }}
-                            onClick={handleCloseDetailsDialog}
-                        >
-                            Fermer
-                        </Typography>
-                    </Fab>
-                </DialogActions>
-            </Dialog>
-            <Dialog sx={{ textAlign: "left" }} open={showAddClient} onClose={handleCloseAddClient}>
-                <DialogContent sx={{ textAlign: "left", overflowX: "auto" }}>
-                    <AddClient
-                        // Pass any required props to the AddClient component, if needed
-                        refreshClientList={refreshClientList}
-                        handleCloseAddClient={handleCloseAddClient}
                     />
                 </DialogContent>
                 <DialogActions>
-                    {/* Optionally, add buttons or actions for the AddClient dialog */}
+                    <Button onClick={handleCloseDialog}>Annuler</Button>
+                    <Button
+                        onClick={sendEmail}
+                        color="primary"
+                        disabled={!emailContent}
+                    >
+                        Envoyer
+                    </Button>
+                </DialogActions>
+                {showAlert && (
+                    <Alert severity="success" onClose={() => setShowAlert(false)}>
+                        E-mail envoyé avec succès !
+                    </Alert>
+                )}
+            </Dialog>
+
+            <Dialog
+                open={openCard}
+                onClose={() => setOpenCard(false)}
+                maxWidth="md" // Set the maximum width of the dialog
+                fullWidth // Make the dialog take up the full width of the screen
+            >
+                <DialogTitle>Garanties</DialogTitle>
+                <DialogContent sx={{ width: 'auto', textAlign: "center" }}>
+                    {selectedDevis && (
+                        <Box>
+
+
+                            <TableContainer>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell> <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold", color: '#ed3026' }}>Catégorie</Typography></TableCell>
+                                            <TableCell> <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold", color: '#ed3026' }}>Nom</Typography></TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {selectedDevis.pack.garantiesParametrage.map((garantie, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell>{garantie.categorie}</TableCell>
+                                                <TableCell>{garantie.nom}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenCard(false)}>Fermer</Button>
                 </DialogActions>
             </Dialog>
 
@@ -520,7 +548,7 @@ function clientList() {
 
 
                     }}
-                    onClick={handleNextPage} disabled={clients.length < itemsPerPage}
+                    onClick={handleNextPage} disabled={devis.length < itemsPerPage}
                 >
                     <ArrowForwardIosIcon />
                 </Fab>
@@ -530,8 +558,12 @@ function clientList() {
 
                 <Button>Next</Button>
             </Box>
+
+
+
         </Box>
     );
 }
 
-export default clientList
+
+export default GarantiesList

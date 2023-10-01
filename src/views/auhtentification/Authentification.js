@@ -1,13 +1,13 @@
+// Authentification.js
+
 import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
-
-import './Authentification.css'
-
-import SignUpForm from "./pages/SignUpForm";
-import SignInForm from "./pages/SignInForm";
+import "./Authentification.css";
 
 const Authentification = () => {
+  const location = useLocation();
+
   return (
     <div className="App">
       <div className="appAside" />
@@ -15,6 +15,7 @@ const Authentification = () => {
         <div className="pageSwitcher">
           <NavLink
             to="/login/signin"
+            isActive={() => location.pathname === "/login/signin"}
             activeClassName="pageSwitcherItem-active"
             className="pageSwitcherItem"
           >
@@ -22,6 +23,7 @@ const Authentification = () => {
           </NavLink>
           <NavLink
             to="/login/signup"
+            isActive={() => location.pathname === "/login/signup"}
             activeClassName="pageSwitcherItem-active"
             className="pageSwitcherItem"
           >
